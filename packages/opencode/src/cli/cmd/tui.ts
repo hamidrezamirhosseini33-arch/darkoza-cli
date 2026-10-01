@@ -138,12 +138,12 @@ export function resolveThreadDirectory(project?: string, envPWD = process.env.PW
 
 export const TuiThreadCommand = cmd({
   command: "$0 [project]",
-  describe: "start kilo tui", // kilocode_change
+  describe: "start darkoza tui", // darkoza_change
   builder: (yargs) =>
     withNetworkOptions(yargs)
       .positional("project", {
         type: "string",
-        describe: "path to start kilo in", // kilocode_change
+        describe: "path to start darkoza in", // darkoza_change
       })
       .option("model", {
         type: "string",
@@ -171,7 +171,7 @@ export const TuiThreadCommand = cmd({
       // kilocode_change start - create/reuse a git worktree before starting
       .option("worktree", {
         type: "string",
-        describe: "create (or reuse) a git worktree with this name and start kilo there",
+        describe: "create (or reuse) a git worktree with this name and start darkoza there",
       })
       // kilocode_change end
       .option("prompt", {

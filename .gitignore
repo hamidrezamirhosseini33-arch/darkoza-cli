@@ -3,6 +3,7 @@
 .secrets/
 node_modules
 .worktrees
+.tools/
 .sst
 .env
 .env.local

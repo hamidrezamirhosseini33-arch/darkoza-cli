@@ -4,17 +4,21 @@ const no = new Set(["0", "false", "no", "off"])
 
 const modern = {
   tui: [
-    `██  ██ ██🬺🬏   ██  ██   ██🬺🬏     ████ ██     ██🬺🬏   `,
-    `████🬺🬏 ~~██   ██  ~~ ██~~██   ██~~~~ ██     ~~██   `,
-    `██  ██ ██████ 🬁🬬████ 🬁🬬██~~   🬁🬬████ 🬁🬬████ ██████ `,
-    `~~  ~~ ~~~~~~   ~~~~   ~~       ~~~~   ~~~~ ~~~~~~ `,
+    "██████  █████  ██████  ██    ██ ██████   █████  ███████",
+    "██      ██   ██ ██   ██ ██    ██ ██   ██ ██   ██    ███",
+    "██████  ███████ ██████  ██    ██ ██████  ███████  ███",
+    "    ██  ██   ██ ██      ██    ██ ██   ██ ██   ██ ███",
   ],
   plain: [
-    `██  ██ ██🬺🬏   ██  ██   ██🬺🬏     ████ ██     ██🬺🬏   `,
-    `████🬺🬏   ██   ██     ██  ██   ██     ██       ██   `,
-    `██  ██ ██████ 🬁🬬████ 🬁🬬██     🬁🬬████ 🬁🬬████ ██████ `,
+    "DARKOZA",
+    "AI CODING AGENT",
+    "BUILD • TEST • SHIP",
   ],
-  exit: [`  ██  ██ ██🬺🬏   ██  ██   ██🬺🬏  `, `  ████🬺🬏   ██   ██     ██  ██  `, `  ██  ██ ██████ 🬁🬬████ 🬁🬬██    `],
+  exit: [
+    "DARKOZA",
+    "darkoza -s",
+    "GOODBYE",
+  ],
 }
 
 const fallback = {
@@ -48,7 +52,7 @@ function windows(env: NodeJS.ProcessEnv) {
 }
 
 export function supports(env = process.env, platform = process.platform) {
-  const override = flag(env.KILO_UNICODE_LOGO)
+  const override = flag(env.DARKOZA_UNICODE_LOGO ?? env.KILO_UNICODE_LOGO)
   if (override !== undefined) return override
   if (env.TERM === "dumb") return false
   // Old Windows Console Host cannot render the sextant glyphs used by the modern logo.

@@ -10,7 +10,7 @@ import { ServerAuth } from "@/server/auth"
 
 export const AttachCommand = cmd({
   command: "attach <url>",
-  describe: "attach to a running kilo server", // kilocode_change
+  describe: "attach to a running darkoza server", // darkoza_change
   builder: (yargs) =>
 
     yargs

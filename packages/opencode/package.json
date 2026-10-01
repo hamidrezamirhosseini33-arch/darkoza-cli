@@ -17,6 +17,7 @@
     "test:ci": "bun run script/test-runner.ts --ci"
   },
   "bin": {
+    "darkoza": "./bin/darkoza",
     "kilo": "./bin/kilo",
     "kilocode": "./bin/kilo"
   },

@@ -1,0 +1,158 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+DARKOZA_ENV_FILE=${DARKOZA_ENV_FILE:-}
+DARKOZA_CONFIG_DIR=${DARKOZA_CONFIG_DIR:-}
+DARKOZA_BASE_URL=${DARKOZA_BASE_URL:-}
+DARKOZA_MODEL=${DARKOZA_MODEL:-}
+DARKOZA_API_KEY=${DARKOZA_API_KEY:-}
+DARKOZA_CONTEXT=${DARKOZA_CONTEXT:-}
+DARKOZA_OUTPUT=${DARKOZA_OUTPUT:-}
+PARSPACK_API_BASE=${PARSPACK_API_BASE:-}
+PARSPACK_MODEL=${PARSPACK_MODEL:-}
+PARSPACK_API_KEY=${PARSPACK_API_KEY:-}
+
+ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
+PKG="$ROOT/packages/opencode"
+
+ENV_FILE=$DARKOZA_ENV_FILE
+if [ -z "$ENV_FILE" ]; then ENV_FILE=/root/goths-ai-platform/tools/.env; fi
+read_env() {
+  grep -E "^$1=" "$ENV_FILE" 2>/dev/null | head -1 | cut -d= -f2- | sed -E 's/^"//; s/"$//; s/^\x27//; s/\x27$//'
+}
+if [ -f "$ENV_FILE" ]; then
+  PARSPACK_API_BASE=${PARSPACK_API_BASE:-$(read_env PARSPACK_API_BASE)}
+  PARSPACK_MODEL=${PARSPACK_MODEL:-$(read_env PARSPACK_MODEL)}
+  PARSPACK_API_KEY=${PARSPACK_API_KEY:-$(read_env PARSPACK_API_KEY)}
+fi
+
+CONFIG_DIR=$DARKOZA_CONFIG_DIR
+if [ -z "$CONFIG_DIR" ]; then CONFIG_DIR=$HOME/.config/darkoza; fi
+mkdir -p "$CONFIG_DIR"
+export KILO_CLIENT=cli
+export DARKOZA_CLI=1
+export KILO_CONFIG_DIR="$CONFIG_DIR"
+
+BASE_URL=$DARKOZA_BASE_URL
+if [ -z "$BASE_URL" ]; then BASE_URL=$PARSPACK_API_BASE; fi
+if [ -z "$BASE_URL" ]; then BASE_URL=https://ai.parspack.com/v1; fi
+BASE_URL="$(printf '%s' "$BASE_URL" | sed 's:/*$::')"
+
+MODEL=$DARKOZA_MODEL
+if [ -z "$MODEL" ]; then MODEL=$PARSPACK_MODEL; fi
+API_KEY=$DARKOZA_API_KEY
+if [ -z "$API_KEY" ]; then API_KEY=$PARSPACK_API_KEY; fi
+export DARKOZA_API_KEY="$API_KEY"
+CONTEXT=$DARKOZA_CONTEXT
+if [ -z "$CONTEXT" ]; then CONTEXT=131072; fi
+OUTPUT=$DARKOZA_OUTPUT
+if [ -z "$OUTPUT" ]; then OUTPUT=16384; fi
+write_config() {
+  if [ -z "$MODEL" ]; then return 0; fi
+  node - "$CONFIG_DIR/kilo.json" "$BASE_URL" "$MODEL" "$CONTEXT" "$OUTPUT" <<'NODE'
+const fs = require("fs")
+const [path, baseURL, model, context, output] = process.argv.slice(2)
+const config = {
+  model: "parspack/" + model,
+  provider: {
+    parspack: {
+      npm: "@ai-sdk/openai-compatible",
+      env: ["DARKOZA_API_KEY"],
+      models: {
+        [model]: {
+          name: model,
+          tool_call: true,
+          reasoning: true,
+          limit: { context: Number(context), output: Number(output) }
+        }
+      },
+      options: { baseURL }
+    }
+  }
+}
+fs.writeFileSync(path, JSON.stringify(config, null, 2) + "\n")
+NODE
+}
+
+models_cmd() {
+  if [ -z "$API_KEY" ]; then
+    echo "Darkoza: missing Parspack API key." >&2
+    exit 2
+  fi
+  curl -fsS --max-time 15 -H "Authorization: Bearer $API_KEY" "$BASE_URL/models" | python3 -c 'import json,sys; d=json.load(sys.stdin); [print(x.get("id","")) for x in d.get("data",[]) if x.get("id")]'
+}
+
+doctor_cmd() {
+  echo "Darkoza Parspack doctor"
+  echo "provider=parspack"
+  echo "base_url=$BASE_URL"
+  if [ -n "$MODEL" ]; then echo "model=$MODEL"; else echo "model=<unset>"; fi
+  if [ -z "$API_KEY" ]; then
+    echo "status=missing_api_key"
+    exit 2
+  fi
+  code="$(curl -sS --max-time 15 -o /tmp/darkoza-models.json -w "%{http_code}" -H "Authorization: Bearer $API_KEY" "$BASE_URL/models" || true)"
+  if [ "$code" = "200" ]; then
+    count="$(python3 -c 'import json; print(len(json.load(open("/tmp/darkoza-models.json")).get("data",[])))')"
+    echo "status=ok"
+    echo "models=$count"
+    exit 0
+  fi
+  echo "status=error"
+  echo "http=$code"
+  exit 1
+}
+
+setup_cmd() {
+  cat <<EOF
+Darkoza Parspack setup
+
+Existing server credential:
+  /root/goths-ai-platform/tools/.env
+
+Environment:
+  export DARKOZA_API_KEY="..."
+  export DARKOZA_MODEL="model-id"
+  export DARKOZA_BASE_URL="https://ai.parspack.com/v1"
+
+Useful:
+  darkoza models
+  darkoza doctor
+  DARKOZA_MODEL=xiaomi/mimo-v2.5 darkoza
+EOF
+}
+
+case "${1:-}" in
+  models)
+    shift
+    models_cmd "$@"
+    exit 0
+    ;;
+  doctor)
+    shift
+    doctor_cmd "$@"
+    exit 0
+    ;;
+  setup|config)
+    shift
+    setup_cmd "$@"
+    exit 0
+    ;;
+esac
+
+if [ -z "$MODEL" ]; then
+  echo "Darkoza: set DARKOZA_MODEL or PARSPACK_MODEL." >&2
+  exit 2
+fi
+if [ -z "$API_KEY" ]; then
+  echo "Darkoza: set DARKOZA_API_KEY or PARSPACK_API_KEY." >&2
+  exit 2
+fi
+
+write_config
+
+if [ -x /usr/local/lib/darkoza/darkoza ]; then
+  exec /usr/local/lib/darkoza/darkoza "$@"
+fi
+
+exec env DARKOZA_CLI=1 KILO_CLIENT=cli KILO_CONFIG_DIR="$CONFIG_DIR" bun run --cwd "$PKG" --conditions=node src/index.ts "$@"

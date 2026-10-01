@@ -194,7 +194,7 @@ function build(input: SplashWriterInput, kind: "entry" | "exit", ctx: Scrollback
       })
     }
 
-    push(lines, body_left, top, "Kilo", right, undefined, TextAttributes.BOLD) // kilocode_change
+    push(lines, body_left, top, "Darkoza", right, undefined, TextAttributes.BOLD) // darkoza_change
     if (input.detail) {
       push(
         lines,

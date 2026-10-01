@@ -44,7 +44,7 @@ export const PrCommand = cmd({
 
 export const PrCheckoutCommand = effectCmd({
   command: "checkout <number>",
-  describe: "fetch and checkout a GitHub PR branch, then run kilo", // kilocode_change
+  describe: "fetch and checkout a GitHub PR branch, then run darkoza", // darkoza_change
   builder: (yargs) =>
     yargs.positional("number", {
       type: "number",

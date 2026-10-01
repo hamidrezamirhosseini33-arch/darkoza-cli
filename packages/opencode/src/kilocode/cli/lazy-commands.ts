@@ -68,13 +68,13 @@ export const AcpCommand = lazy({
 
 export const AttachCommand = lazy({
   command: "attach <url>",
-  describe: "attach to a running kilo server",
+  describe: "attach to a running darkoza server",
   load: async () => (await import("@/cli/cmd/attach")).AttachCommand,
 })
 
 export const RunCommand = lazy({
   command: "run [message..]",
-  describe: "run kilo with a message",
+  describe: "run darkoza with a message",
   load: async () => (await import("@/cli/cmd/run")).RunCommand,
 })
 
