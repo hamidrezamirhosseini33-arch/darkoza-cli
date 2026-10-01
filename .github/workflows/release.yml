@@ -62,11 +62,22 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Build native Darkoza binary
+      - name: Build native Darkoza binary (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
         run: |
+          set -euo pipefail
           version="${GITHUB_REF_NAME#v}"
           if [[ "${{ matrix.label }}" == linux-* ]]; then export ZIG="$ZIG"; fi
           KILO_VERSION="$version" bun run --cwd packages/opencode build --single --skip-install
+
+      - name: Build native Darkoza binary (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $version = $env:GITHUB_REF_NAME.Substring(1)
+          $env:KILO_VERSION = $version
+          bun run --cwd packages/opencode build --single --skip-install
 
       - name: Package Unix
         if: runner.os != 'Windows'
