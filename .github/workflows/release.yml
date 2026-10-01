@@ -26,7 +26,8 @@ jobs:
           - label: linux-arm64
             runner: ubuntu-24.04-arm
             shell: bash
-          - label: darwin-arm64            runner: macos-15
+          - label: darwin-arm64
+            runner: macos-15
             shell: bash
           - label: darwin-x64
             runner: macos-15-intel
@@ -89,7 +90,8 @@ jobs:
           $version = $env:GITHUB_REF_NAME.Substring(1)
           $src = 'packages/opencode/dist/@kilocode/cli-windows-x64/bin'
           if (-not (Test-Path "$src/kilo.exe")) { throw 'Missing compiled Darkoza binary' }
-          Rename-Item "$src/kilo.exe" "$src/darkoza.exe"          Compress-Archive -Path "$src\*" -DestinationPath "darkoza-windows-x64-$version.zip" -Force
+          Rename-Item "$src/kilo.exe" "$src/darkoza.exe"
+          Compress-Archive -Path "$src\*" -DestinationPath "darkoza-windows-x64-$version.zip" -Force
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
